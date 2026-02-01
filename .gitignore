@@ -10,3 +10,5 @@ target/
 
 # Virtual environments
 .venv
+
+data/
