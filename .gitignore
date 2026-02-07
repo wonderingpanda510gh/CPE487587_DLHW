@@ -12,6 +12,5 @@ target/
 .venv
 
 data/
-data/
+results/
 
-data/

@@ -1,4 +1,5 @@
 import argparse
+import csv
 import os
 from datetime import datetime
 
@@ -12,6 +13,7 @@ from sklearn.preprocessing import StandardScaler
 from cpe487587hw import SimpleNN, ClassTrainer
 
 
+# clean the data, because the data is so messy, some columns has some extra space (and some not), and some columns are not useful for training, we need to drop them
 col_drop = [
     "Flow ID",
     "Source IP", 
@@ -37,8 +39,9 @@ def parse_args():
     p.add_argument("--device", type=str, default=None, choices=["cpu", "cuda"])
     p.add_argument("--keyword", type=str, default="hw02")
     p.add_argument("--outdir", type=str, default="results")
-    p.add_argument("--save_onnx", default= True, action="store_true")
+    p.add_argument("--save_onnx", action="store_true")
     p.add_argument("--onnx_name", type=str, default="multiclass_model.onnx")
+    p.add_argument("--stamp", type=str, default=None)
     return p.parse_args()
 
 
@@ -68,27 +71,52 @@ def encode_labels(lables):
 
 def main():
     print("********HW02 08: Multiclass Classification********")
-    print("\n Begin!!!!!!!!!!!!!!")
+    print("Begin our training!!!!!!!!!!!!!!")
+    print("cuda available:", torch.cuda.is_available())
     args = parse_args()
     os.makedirs(args.outdir, exist_ok=True)
 
     device = select_device(args.device)
 
-    # load data 
-    df = pl.read_csv(args.data, infer_schema_length=10000)
+    # clean the data, ahhh, terrible data quality
+    with open(args.data, newline="", encoding="utf-8") as f:
+        reader = csv.reader(f)
+        header = [h.strip() for h in next(reader)]
+        rows = list(reader)
+
+    with open("data/Android_Malware_clean.csv", "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        writer.writerows(rows)
+
+    # load the clean data 
+    df = pl.read_csv("data/Android_Malware_clean.csv",infer_schema_length=0)
+
 
     # cleaning and processing the data
     present_drop = [c for c in col_drop if c in df.columns]
     if present_drop:
         df = df.drop(present_drop)
-    label_col = find_label_col(df.columns)
 
-    # get the features and labels, we map the labels from text to number
+    label_col = find_label_col(df.columns)
+    if isinstance(label_col, list):
+        label_col = label_col[0]
+
+    # labels
     lables = df.select(label_col).to_numpy().reshape(-1)
-    X = df.drop(label_col).to_numpy().astype(np.float32)
+
+    # deal with null and nan
+    feat_df = df.drop(label_col).select([
+        pl.col(c).cast(pl.Float64, strict=False).alias(c)
+        for c in df.drop(label_col).columns
+    ]).fill_null(0.0).fill_nan(0.0)
+
+    X = feat_df.to_numpy().astype(np.float32)
+
     y, classes, _ = encode_labels(lables)
     num_classes = len(classes)
     in_features = X.shape[1]
+
 
     # 80:20 train-test split
     X_train, X_test, y_train, y_test = train_test_split(
@@ -101,12 +129,14 @@ def main():
 
     # normalize the data
     scaler = StandardScaler()
-    X_train = scaler.fit_transform(X_train).astype(np.float32)
-    X_test = scaler.transform(X_test).astype(np.float32)
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
 
     # training
     model = SimpleNN(in_features=in_features, num_classes=num_classes)
-    loss_function = torch.nn.BCEWithLogitsLoss()
+    loss_function = torch.nn.CrossEntropyLoss()
+
+    stamp = args.stamp
 
     trainer = ClassTrainer(
         X_train=X_train,
@@ -117,13 +147,16 @@ def main():
         optimizer=args.optimizer,
         model=model,
         device=device,
+        outdir=args.outdir,
+        keyword=args.keyword,
+        stamp=stamp
     )
 
     trainer.train()
     test_loss, test_acc = trainer.test(X_test, y_test)
 
     # all the metrics and results saving
-    stamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    # stamp = datetime.now().strftime("%Y%m%d%H%M%S")
     out_csv_dir = os.path.join(args.outdir, f"{args.keyword}_{stamp}")
 
     metrics = trainer.evaluate()
@@ -160,9 +193,9 @@ def main():
     pl.DataFrame(row).write_csv(out_csv)
 
     print("\n********End Training********")
-    print("Saved metrics CSV:", out_csv)
+    print("Saved metrics", out_csv)
     if onnx_path:
-        print("Saved ONNX:", onnx_path)
+        print("Saved model", onnx_path)
 
 
 if __name__ == "__main__":

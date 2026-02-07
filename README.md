@@ -33,5 +33,8 @@ The script will automatically:
 
 - save trained weights and save generated PDF
 
+For the HW02:
+We have the pdf for the theory part. Here we just discuss about the HW02-Q7 and HW02-Q8
+
 ## Author
 Zhehao Yi

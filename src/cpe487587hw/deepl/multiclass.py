@@ -1,3 +1,4 @@
+from pathlib import Path
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -27,14 +28,18 @@ class SimpleNN(nn.Module):
 
 
 class ClassTrainer():
-    def __init__(self, X_train, Y_train, eta, epoch, loss, optimizer, model, device):
+    def __init__(self, X_train, Y_train, eta, epoch, loss, optimizer, model, device, outdir="results", keyword="hw02", stamp=None):
+        self.device = device
         self.X_train = torch.as_tensor(X_train, dtype=torch.float32, device=self.device)
-        self.Y_train = torch.as_tensor(Y_train, dtype=torch.long, device=self.device)
+        self.Y_train = torch.as_tensor(Y_train, dtype=torch.long, device=self.device).view(-1)
         self.eta = eta
         self.epoch = epoch
-        self.loss = nn.BCEWithLogitsLoss()
+        self.loss = nn.CrossEntropyLoss()
+        self.outdir = outdir
+        self.keyword = keyword
+        self.stamp = stamp
+        self.file_prefix = str(Path(self.outdir) / f"{self.keyword}_{self.stamp}")
         
-        self.device = device
         self.model = model.to(self.device)
         if optimizer == "adam":
             self.optimizer = optim.Adam(self.model.parameters(), lr=self.eta)
@@ -54,7 +59,6 @@ class ClassTrainer():
         for ep in range(self.epoch):
             neural_output = self.model(self.X_train)
             loss = self.loss(neural_output, self.Y_train)
-
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
@@ -71,6 +75,10 @@ class ClassTrainer():
             self.loss_vector[ep] = float(loss.detach().cpu())
             self.accuracy_vector[ep] = float(acc.detach().cpu())
 
+        with torch.no_grad():
+            final_train_output = self.model(self.X_train)
+            self.last_train_pred = final_train_output.argmax(dim=1).detach().cpu()
+  
         return self.loss_vector, self.accuracy_vector
     
     def test(self, X_test, Y_test):
@@ -127,7 +135,7 @@ class ClassTrainer():
         ax1.legend(lines1 + lines2, labels1 + labels2, loc="upper right")
 
         plt.tight_layout()
-        plt.savefig(f"training_loss_acc.pdf", dpi=200, bbox_inches="tight")
+        plt.savefig(f"{self.file_prefix}_training_loss_acc.pdf", dpi=200, bbox_inches="tight")
         plt.close()
 
         metrics = {}
@@ -137,7 +145,7 @@ class ClassTrainer():
         disp.plot(values_format="d", xticks_rotation=45)
         plt.title("Training Confusion Matrix")
         plt.tight_layout()
-        plt.savefig(f"cpe487587hw02_cm_train.pdf", dpi=200, bbox_inches="tight")
+        plt.savefig(f"{self.file_prefix}_cpe487587hw02_cm_train.pdf", dpi=200, bbox_inches="tight")
         plt.close()
 
         # compute precision, recall, f1-score, accuracy for training set
@@ -145,8 +153,10 @@ class ClassTrainer():
         accuracy = accuracy_score(self.Y_train.detach().cpu().numpy(), self.last_train_pred.numpy())
         metrics["train_precision"] = precision
         metrics["train_recall"] = recall
-        metrics["train_f1_score"] = f1_score
+        metrics["train_f1"] = f1_score
         metrics["train_accuracy"] = accuracy
+
+        print(f"Training Precision: {precision:.4f}, Recall: {recall:.4f}, F1-Score: {f1_score:.4f}, Accuracy: {accuracy:.4f}")
 
         # compute confusion matrix for test set
         cm_t = confusion_matrix(self.last_test_true.numpy(), self.last_test_pred.numpy())
@@ -154,7 +164,7 @@ class ClassTrainer():
         disp_t.plot(values_format="d", xticks_rotation=45)
         plt.title("Test Confusion Matrix")
         plt.tight_layout()
-        plt.savefig(f"cpe487587hw02_cm_test.pdf", dpi=200, bbox_inches="tight")
+        plt.savefig(f"{self.file_prefix}_cpe487587hw02_cm_test.pdf", dpi=200, bbox_inches="tight")
         plt.close()
 
         # compute precision, recall, f1-score, accuracy for test set
@@ -162,9 +172,9 @@ class ClassTrainer():
         accuracy_t = accuracy_score(self.last_test_true.numpy(), self.last_test_pred.numpy())
         metrics["test_precision"] = precision_t
         metrics["test_recall"] = recall_t
-        metrics["test_f1_score"] = f1_score_t
+        metrics["test_f1"] = f1_score_t
         metrics["test_accuracy"] = accuracy_t
 
-        print(f"Precision: {precision_t:.4f}, Recall: {recall_t:.4f}, F1-Score: {f1_score_t:.4f}, Accuracy: {accuracy_t:.4f}")
+        print(f"Test Precision: {precision_t:.4f}, Recall: {recall_t:.4f}, F1-Score: {f1_score_t:.4f}, Accuracy: {accuracy_t:.4f}")
 
         return metrics
