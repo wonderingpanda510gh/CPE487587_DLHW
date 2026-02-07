@@ -63,7 +63,9 @@ After that, we need to download the dataset
 ```
 bash scripts/malwaredatadownload.sh
 
-# please pay attention to this dataset; it's not a clean dataset, and we need to manually clean it. I suggested using a CSV file loader to check that everything is right.
+# please pay attention to this dataset; 
+# it's not a clean dataset, and we need to manually clean it. 
+# I suggested using a CSV file loader to check that everything is right.
 ```
 Then, we have the .sh file that can used to directly run the code
 ```
