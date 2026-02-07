@@ -18,9 +18,9 @@ STAMP=$(date +"%Y%m%d%H%M%S")
 mkdir -p "${OUTDIR}" # output directory
 
 echo "We will run 5 times multiclass_impl.py"
-for i in 1; do
+for i in 1 2 3 4 5; do
   echo "This is the ${i} run of multiclass_impl.py"
-  python multiclass_impl.py \
+  python scripts/multiclass_impl.py \
     --data "${DATA}" \
     --eta "${ETA}" \
     --epoch "${EPOCH}" \
@@ -36,7 +36,7 @@ for i in 1; do
 done
 
 echo "Finish running multiclass_impl.py 5 times, now we will run multiclass_eval.py to aggregate the results and plot the boxplot."
-python multiclass_eval.py \
+python scripts/multiclass_eval.py \
   --keyword "${KEYWORD}" \
   --outdir "${OUTDIR}" \
   --stamp "${STAMP}" \

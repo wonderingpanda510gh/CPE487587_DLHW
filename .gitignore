@@ -14,3 +14,8 @@ target/
 data/
 results/
 
+*.so
+*.pyd
+*.dll
+*.dylib
+*.typed

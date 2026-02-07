@@ -74,7 +74,7 @@ def main():
     plt.grid(True, axis="y", linestyle="--", alpha=0.5)
     plt.tight_layout()
 
-    plot_path = outdir / f"{args.keyword}_boxplot_{ts}.pdf"
+    plot_path = outdir / f"{args.keyword}_boxplot_{args.stamp}.pdf"
     plt.savefig(plot_path)
     plt.close()
 
