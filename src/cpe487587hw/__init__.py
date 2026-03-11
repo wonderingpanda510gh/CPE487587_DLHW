@@ -1,5 +1,5 @@
 from cpe487587hw._core import hello_from_bin
-from .deepl import binary_classification, SimpleNN, ClassTrainer
+from .deepl import binary_classification, SimpleNN, ClassTrainer, ConvLayer, ImageNetCNN, CNNTrainer
 from .animation import animate_weight_heatmap, animate_large_heatmap
 
 

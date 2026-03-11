@@ -72,5 +72,7 @@ Then, we have the .sh file that can used to directly run the code
 bash scripts/multiclass_impl.sh
 ```
 this script will automaticlly run the code five times, and all the output will be recorded in "results/" folder.
+
+HW03-06:
 ## Author
 Zhehao Yi

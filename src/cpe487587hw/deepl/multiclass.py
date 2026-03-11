@@ -178,3 +178,128 @@ class ClassTrainer():
         print(f"Test Precision: {precision_t:.4f}, Recall: {recall_t:.4f}, F1-Score: {f1_score_t:.4f}, Accuracy: {accuracy_t:.4f}")
 
         return metrics
+
+
+class ConvLayer(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super().__init__()
+        self.block = nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, stride = 1, kernel_size = 3, padding = 1),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(),
+            nn.MaxPool2d(2, stride=2)
+        )
+        
+
+    def forward(self, x):
+        x = self.block(x)
+        return x
+
+class ImageNetCNN(nn.Module):
+    def __init__(self, in_channels, num_classes):
+        super().__init__()
+        self.process = nn.Sequential(
+            ConvLayer(in_channels, 64),
+            ConvLayer(64, 128),
+            ConvLayer(128, 256),
+            ConvLayer(256, 512),
+            ConvLayer(512, 512)
+        )
+        self.fcprocess = nn.Sequential(
+            nn.AdaptiveAvgPool2d((1, 1)),
+            nn.Flatten(),
+            nn.Linear(512, 1024),
+            nn.ReLU(),
+            nn.Dropout(0.5), # droput I define as 0.5
+            nn.Linear(1024, num_classes),
+        )
+
+    def forward(self, x):
+        x = self.process(x)
+        x = self.fcprocess(x)
+        return x
+
+class CNNTrainer():
+    def __init__(self, model, device, loss_function, optimizer, scheduler):
+        self.model = model.to(device)
+        self.device = device
+        self.loss_function = loss_function
+        self.optimizer = optimizer
+        self.scheduler = scheduler
+
+        self.train_loss = []
+        self.train_accuracy = []
+        self.val_accuracy = []
+
+    # compute accuracy for image classification
+    def accuracy(self, outputs, labels):
+        _, preds = torch.max(outputs, 1)
+        correct = (preds == labels).sum().item()
+        return correct
+
+    def train_epoch(self, dataloader, epoch):
+        self.model.train()
+        total_loss = 0
+        total_acc = 0
+        total_samples = 0
+
+        for batch_idx, (inputs, labels) in enumerate(dataloader):
+            inputs, labels = inputs.to(self.device), labels.to(self.device)
+
+            self.optimizer.zero_grad()
+            outputs = self.model(inputs)
+            loss = self.loss_function(outputs, labels)
+            loss.backward()
+            self.optimizer.step()
+
+            batch_size = labels.size(0)
+            total_loss += loss.item() * batch_size
+            batch_acc = self.accuracy(outputs, labels)
+            total_acc += batch_acc
+            total_samples += batch_size
+            batch_acc = batch_acc / batch_size
+
+            if batch_idx % 10 == 0:
+                print(f"Epoch {epoch+1}, Batch {batch_idx}/{len(dataloader)}, Loss: {loss.item():.4f}, Training Accuracy: {batch_acc:.4f}")
+
+        epoch_loss = total_loss / total_samples
+        epoch_acc = total_acc / total_samples
+        self.train_loss.append(epoch_loss)
+        self.train_accuracy.append(epoch_acc)
+
+        return epoch_loss, epoch_acc
+
+    @torch.no_grad()
+    def validation(self, dataloader):
+        self.model.eval()
+        total_acc = 0
+        total_samples = 0
+        for batch_idx, (inputs, labels) in enumerate(dataloader):
+            inputs, labels = inputs.to(self.device), labels.to(self.device)
+
+            outputs = self.model(inputs)
+            total_acc += self.accuracy(outputs, labels)
+            total_samples += labels.size(0)
+
+        val_acc = total_acc / total_samples
+        self.val_accuracy.append(val_acc)
+        return val_acc
+
+    def fit(self, train_loader, val_loader, num_epochs):
+        for epoch in range(num_epochs):
+            train_loss, train_acc = self.train_epoch(train_loader, epoch)
+            val_acc = self.validation(val_loader)
+            print(f"Epoch {epoch+1}/{num_epochs}, Train Loss: {train_loss:.4f}, Train Accuracy: {train_acc:.4f}, Validation Accuracy: {val_acc:.4f}")
+            self.scheduler.step()
+
+    def save(self, file_name = "cpe487587_hw03_cnn.onnx"):
+        self.model.eval()
+        dummy_input = torch.randn(1, 3, 224, 224, device=self.device)
+        torch.onnx.export(self.model, dummy_input, file_name, input_names=["input"], output_names=["classification"],     
+        export_params=True,
+        dynamic_axes={
+            "input": {0: "batch_size"},
+            "classification": {0: "batch_size"}
+        },
+        opset_version=12
+        )

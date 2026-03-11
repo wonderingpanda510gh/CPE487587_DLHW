@@ -8,6 +8,9 @@ authors = [
 ]
 requires-python = ">=3.14"
 dependencies = [
+    "dataset>=1.6.2",
+    "datasets>=4.7.0",
+    "huggingface-hub>=1.6.0",
     "manim>=0.19.2",
     "matplotlib>=3.10.8",
     "onnx>=1.20.1",
@@ -16,6 +19,7 @@ dependencies = [
     "polars>=1.37.1",
     "scikit-learn>=1.8.0",
     "torch>=2.10.0",
+    "torchvision>=0.25.0",
 ]
 
 [tool.maturin]
