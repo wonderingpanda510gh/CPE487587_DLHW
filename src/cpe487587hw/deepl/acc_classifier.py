@@ -58,7 +58,7 @@ class NormalizationStats:
     std: np.ndarray
 
 class ACCCruiseDataset(Dataset):
-    def __init__(self, root_dir, k, split, split_ratio, normalize, stats, random_seed):
+    def __init__(self, root_dir, k, split, split_ratio, normalize, random_seed):
         super().__init__()
         assert split in {"train", "val"}
 
@@ -92,10 +92,6 @@ class ACCCruiseDataset(Dataset):
                 std = self.x.std(axis=0)
                 std = np.where(std < 1e-8, 1.0, std)
                 self.stats = NormalizationStats(mean=mean, std=std)
-            else:
-                if stats is None:
-                    raise ValueError("Validation dataset requires training stats.")
-                self.stats = stats
 
             self.x = (self.x - self.stats.mean) / self.stats.std
 

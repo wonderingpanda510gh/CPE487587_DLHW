@@ -14,6 +14,8 @@ def parse_args():
     p.add_argument("--k", type=int, default=10)
     p.add_argument("--hidden_dim", type=int, default=64)
     p.add_argument("--dropout", type=float, default=0.2)
+    p.add_argument("--split_ratio", type=float, default=0.8)
+    p.add_argument("--random_seed", type=int, default=42)
     p.add_argument("--eta", type=float, default=1e-3)
     p.add_argument("--epoch", type=int, default=20)
     p.add_argument("--batch_size", type=int, default=256)
@@ -84,7 +86,9 @@ def main():
         root_dir=args.data_dir,
         k=args.k,
         split="train",
+        split_ratio=args.split_ratio,
         normalize=True,
+        random_seed=args.random_seed,
     )
     val_dataset = ACCCruiseDataset(
         root_dir=args.data_dir,

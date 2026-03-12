@@ -14,6 +14,8 @@ DEVICE="${DEVICE:-cuda}"
 OUTDIR="${OUTDIR:-results_acc}"
 KEYWORD="${KEYWORD:-hw03_q7}"
 ONNX_NAME="${ONNX_NAME:-acc_model.onnx}"
+SPLIT_RATIO="${SPLIT_RATIO:-0.8}"
+RANDOM_SEED="${RANDOM_SEED:-42}"
 
 echo "Running acc_impl.py"
 python scripts/acc_impl.py \
