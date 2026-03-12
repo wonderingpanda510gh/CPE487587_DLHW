@@ -7,6 +7,7 @@ import os
 import glob
 from dataclasses import dataclass
 from torch.utils.data import Dataset
+import numpy as np
 
 # define the convertation function from km/h to m/s
 def km_to_m(x):
