@@ -8,6 +8,7 @@ import glob
 from dataclasses import dataclass
 from torch.utils.data import Dataset
 import numpy as np
+import polars as pl
 
 # define the convertation function from km/h to m/s
 def km_to_m(x):
@@ -30,26 +31,24 @@ def build_historical_features(speed, k):
 
 # match the wheel speed and acc status files, from the decoded wheel speed fl.csv and acc status.cv/csv files, to get the corresponding speed and label data for training the classifier
 def find_matching_pairs(root_dir):
-    wheel_files = sorted(
-        glob.glob(os.path.join(root_dir, "**", "*decoded wheel speed fl.csv"), recursive=True)
-    )
-    status_files = sorted(
-        glob.glob(os.path.join(root_dir, "**", "*acc status.cv"), recursive=True)
-        + glob.glob(os.path.join(root_dir, "**", "*acc status.csv"), recursive=True)
-    )
+    wheel_files = sorted(glob.glob(os.path.join(root_dir, "*_CAN_Messages_decoded_wheel_speed_fl.csv")))
+    status_files = sorted(glob.glob(os.path.join(root_dir, "*_CAN_Messages_decoded_acc_status.csv")))
+
+    print(f"Found wheel files : {len(wheel_files)}")
+    print(f"Found status files: {len(status_files)}")
 
     status_map = {}
-    for f in status_files:
-        base = os.path.basename(f)
-        prefix = base.replace(" acc status.cv", "").replace(" acc status.csv", "")
-        status_map[prefix] = f
+    for sf in status_files:
+        key = os.path.basename(sf).replace("_CAN_Messages_decoded_acc_status.csv", "")
+        status_map[key] = sf
 
     pairs = []
+
     for wf in wheel_files:
-        base = os.path.basename(wf)
-        prefix = base.replace(" decoded wheel speed fl.csv", "")
-        if prefix in status_map:
-            pairs.append((wf, status_map[prefix]))
+        key = os.path.basename(wf).replace("_CAN_Messages_decoded_wheel_speed_fl.csv", "")
+        if key in status_map:
+            pairs.append((wf, status_map[key]))
+    print(f"Matched pairs: {len(pairs)}")
 
     return pairs
 
@@ -59,7 +58,7 @@ class NormalizationStats:
     std: np.ndarray
 
 class ACCCruiseDataset(Dataset):
-    def __init__(self, root_dir, k, split, split_ratio, normalize, random_seed):
+    def __init__(self, root_dir, k, split, split_ratio, normalize, random_seed, stats = None):
         super().__init__()
         assert split in {"train", "val"}
 
@@ -70,7 +69,6 @@ class ACCCruiseDataset(Dataset):
         self.normalize = normalize
 
         pairs = find_matching_pairs(root_dir)
-
         all_x, all_y = self.load_all_pairs(pairs, k)
 
         rng = np.random.default_rng(random_seed)
@@ -93,7 +91,8 @@ class ACCCruiseDataset(Dataset):
                 std = self.x.std(axis=0)
                 std = np.where(std < 1e-8, 1.0, std)
                 self.stats = NormalizationStats(mean=mean, std=std)
-
+            else: 
+                self.stats = stats
             self.x = (self.x - self.stats.mean) / self.stats.std
 
     def read_speed_csv(self, path):
@@ -108,7 +107,7 @@ class ACCCruiseDataset(Dataset):
 
         speed_t = df["Time"].to_numpy()
         speed_v = df["Message"].to_numpy()
-        speed_v = kmh_to_ms(speed_v.astype(np.float32))
+        speed_v = km_to_m(speed_v.astype(np.float32))
         return speed_t, speed_v
 
     def read_status_csv(self, path):
@@ -131,12 +130,12 @@ class ACCCruiseDataset(Dataset):
         ys = []
 
         for speed_file, status_file in pairs:
-            speed_t, speed_v = self._read_speed_csv(speed_file)
-            label_t, label_bin = self._read_status_csv(status_file)
+            speed_t, speed_v = self.read_speed_csv(speed_file)
+            label_t, label_bin = self.read_status_csv(status_file)
 
-            aligned_y = zoh_align_labels(speed_t, label_t, label_bin)
+            aligned_y = zoh_labels(speed_t, label_t, label_bin)
 
-            feat = build_history_features(speed_v, k=k)
+            feat = build_historical_features(speed_v, k=k)
             target = aligned_y[k:].astype(np.float32)
 
             if len(feat) != len(target):
@@ -151,10 +150,10 @@ class ACCCruiseDataset(Dataset):
         y = np.concatenate(ys, axis=0).astype(np.float32)
         return x, y
 
-    def getlen(self):
+    def __len__(self):
         return len(self.x)
 
-    def getitem(self, idx):
+    def __getitem__(self, idx):
         return (
             torch.tensor(self.x[idx], dtype=torch.float32),
             torch.tensor(self.y[idx], dtype=torch.float32),

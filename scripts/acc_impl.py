@@ -94,8 +94,10 @@ def main():
         root_dir=args.data_dir,
         k=args.k,
         split="val",
+        split_ratio=args.split_ratio,
         normalize=True,
-        stats=train_dataset.stats,
+        random_seed=args.random_seed,
+        stats=train_dataset.stats,  # use train stats for val normalization
     )
 
     print(f"Train samples: {len(train_dataset)}")
@@ -118,7 +120,7 @@ def main():
     model = ACCNet(input_dim=args.k + 1, hidden_dim=args.hidden_dim, dropout=args.dropout).to(device)
 
     if args.loss == "dice":
-        loss_fn = DiceLoss()
+        loss_fn = DiceLoss(1)
 
     # here is the same optimizer and scheduler setup as in the imagenet_impl
     if args.optimizer.upper() == "SGD":

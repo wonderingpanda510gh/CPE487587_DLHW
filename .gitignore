@@ -13,6 +13,7 @@ target/
 
 data/
 results/
+results_acc/
 
 *.so
 *.pyd
