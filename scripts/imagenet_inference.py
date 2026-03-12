@@ -1,10 +1,8 @@
 import argparse
 import os
 import glob
-
 import numpy as np
 from PIL import Image
-
 import onnxruntime as ort
 from datasets import Dataset, concatenate_datasets
 import torchvision.transforms as transforms

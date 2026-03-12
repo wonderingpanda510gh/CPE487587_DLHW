@@ -74,5 +74,17 @@ bash scripts/multiclass_impl.sh
 this script will automaticlly run the code five times, and all the output will be recorded in "results/" folder.
 
 HW03-06:
+Fist we need to do the synchronization, using uv sync, and then
+```
+bash scripts/imagenet_impl.sh # we can directly run this scirpts or you can also modify the parameter in this script or by
+python scipts/imagenet_impl.py --epoch 50 \ --batch_size 256 \ --optimizer ADAM \ etc
+```
+
+HW03-07
+Fist we need to do the synchronization, using uv sync, and then
+```
+bash scripts/acc_impl.sh # we can directly run this scirpts or you can also modify the parameter in this script or by
+python scipts/acc_impl.py --epoch 50 \ --batch_size 256 \ --optimizer ADAM \ etc
+```
 ## Author
 Zhehao Yi
