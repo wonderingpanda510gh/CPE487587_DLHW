@@ -79,13 +79,6 @@ def apply_val_transforms(image):
     return val_transforms(image)
 
 # process the dataset and apply transforms
-# def preprocess_train(example):
-#     example['pixel_values'] = [apply_train_transforms(img) for img in example['image']]
-#     return example
-
-# def preprocess_val(example):
-#     example['pixel_values'] = [apply_val_transforms(img) for img in example['image']]
-#     return example
 def preprocess_train(example):
     example["pixel_values"] = [
         apply_train_transforms(img.convert("RGB"))
@@ -100,12 +93,6 @@ def preprocess_val(example):
     ]
     return example
 
-# def collate_fn(batch):
-#     # Extract pixel_values and labels from each item
-#     pixel_values = torch.stack([item['pixel_values'] for item in batch])
-#     labels = torch.tensor([item['label'] for item in batch])
-
-#     return pixel_values, labels
 def collate_fn(batch):
     pixel_values = torch.stack([item["pixel_values"] for item in batch])
     labels = torch.tensor([item["label"] for item in batch], dtype=torch.long)
@@ -165,14 +152,14 @@ def main():
     os.makedirs(args.outdir, exist_ok=True)
     print(f"Using device: {device}")
 
-    print("Loading dataset")
+    print("Loading dataset!!!!!!!!")
     train_dataset, val_dataset, num_classes = load_imagenet_dataset()
     
-    print("Applying dataset transforms")
+    print("Applying dataset transforms!!!!!!!!")
     train_dataset = train_dataset.with_transform(preprocess_train)
     val_dataset = val_dataset.with_transform(preprocess_val)
 
-    print("Creating data loaders")
+    print("Creating data loaders!!!!!!!!")
     train_loader = DataLoader(
         train_dataset,
         batch_size=args.batch_size,
@@ -187,13 +174,13 @@ def main():
         pin_memory=True, # Important for faster GPU transfer
         collate_fn=collate_fn
     )
-    print("Initializing ImageNetCNN")
+    print("Initializing ImageNetCNN!!!!!!!!")
     model = ImageNetCNN(args.input_channels, num_classes).to(device)
     num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"Trainable parameters: {num_params}")
     loss_function = nn.CrossEntropyLoss()
 
-    print("Setting optimizer")
+    print("Setting optimizer!!!!!!!!")
     if args.optimizer.upper() == "SGD":
         optimizer = torch.optim.SGD(
             model.parameters(),
@@ -214,7 +201,7 @@ def main():
     )
 
 
-    print("Initializing trainer")
+    print("Initializing trainer!!!!!!!!")
     trainer = CNNTrainer(
         model=model,
         device=device,
@@ -223,13 +210,13 @@ def main():
         scheduler=scheduler
     )
 
-    print("Start training")
+    print("Start training!!!!!!!!")
     trainer.fit(train_loader, val_loader, args.epoch)
 
-    print("Plot training curves")
+    print("Plot training curves!!!!!!!!")
     plot_training_curves(trainer, args.outdir, args.keyword)
 
-    print("Save ONNX model")
+    print("Save ONNX model!!!!!!!!")
     if args.save_onnx:
         onnx_path = os.path.join(args.outdir, args.onnx_name)
         trainer.save(onnx_path)
