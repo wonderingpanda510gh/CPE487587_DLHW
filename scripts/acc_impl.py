@@ -20,7 +20,7 @@ def parse_args():
     p.add_argument("--epoch", type=int, default=20)
     p.add_argument("--batch_size", type=int, default=256)
     p.add_argument("--optimizer", type=str, default="ADAM")
-    p.add_argument("--loss", type=str, default="dice", choices=["dice", "focal_tversky"])
+    p.add_argument("--loss", type=str, default="dice", choices=["dice"])
     p.add_argument("--device", type=str, default=None, choices=["cpu", "cuda"])
     p.add_argument("--outdir", type=str, default="results_acc")
     p.add_argument("--keyword", type=str, default="hw03q7")
