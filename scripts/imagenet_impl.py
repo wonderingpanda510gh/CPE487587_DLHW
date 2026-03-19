@@ -143,12 +143,41 @@ def parse_args():
     p.add_argument("--onnx_name", type=str, default="imagenet_model.onnx")
     return p.parse_args()
 
+def get_best_gpu(strategy="utilization"):
+    """
+    Select best GPU by 'utilization' or 'memory'.
+    """
+    if strategy == "memory":
+        # Use PyTorch directly for free memory
+        free_mem = []
+        for i in range(torch.cuda.device_count()):
+            props = torch.cuda.mem_get_info(i) # (free, total)
+            free_mem.append(props[0])
+    return free_mem.index(max(free_mem))
+
+    elif strategy == "utilization":
+        result = subprocess.run(
+        ["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"],
+        capture_output=True, text=True
+        )
+        utilizations = [int(x.strip()) for x in result.stdout.strip().split("\n")]
+    return utilizations.index(min(utilizations))
+
+
+
+
 def main():
     print("********HW03 06: ImageNet Classification********")
     print("Begin our training!!!!!!!!!!!!!!")
     print("cuda available:", torch.cuda.is_available())
     args = parse_args()
-    device = select_device(args.device)
+    # device = select_device(args.device)
+
+    # Pick strategy: "utilization" or "memory"
+    device_id = get_best_gpu(strategy="utilization")
+    device = torch.device(f"cuda:{device_id}")
+    print(f"Selected GPU: {device_id}")
+
     os.makedirs(args.outdir, exist_ok=True)
     print(f"Using device: {device}")
 
