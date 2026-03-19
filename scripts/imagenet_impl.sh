@@ -5,7 +5,7 @@ set -euo pipefail # prevent if the code is wrong, stop immediately and print err
 KEYWORD="hw03"
 ETA="${ETA:-0.01}"
 EPOCH="${EPOCH:-10000}"
-BATCH_SIZE="${BATCH_SIZE:-64}" 
+BATCH_SIZE="${BATCH_SIZE:-128}" 
 INPUT_CHANNELS="${INPUT_CHANNELS:-3}"
 OPTIMIZER="${OPTIMIZER:-SGD}"
 DEVICE="${DEVICE:-cuda}"

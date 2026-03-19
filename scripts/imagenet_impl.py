@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 from datasets import Dataset, concatenate_datasets
 import glob
 import subprocess
+from datasets import load_from_disk
 
 # first we need to load the dataset, we will use the imagenet dataset from huggingface datasets library
 def load_imagenet_dataset():
@@ -18,20 +19,28 @@ def load_imagenet_dataset():
     # token=True,
     # cache_dir="/data/CPE_487-587/imagenet-1k"
     # )
-    base_dir = "/data/CPE_487-587/imagenet-1k/ILSVRC___imagenet-1k/default/0.0.0/49e2ee26f3810fb5a7536bbf732a7b07389a47b5"
+    # dataset = load_dataset(
+    # "ILSVRC/imagenet-1k",
+    # cache_dir=os.path.expanduser("~/.cache/huggingface/imagenet"),
+    # token=True
+    # )
+    dataset = load_from_disk("/data/CPE_487-587/imagenet-1k-arrow")
 
-    train_files = sorted(glob.glob(os.path.join(base_dir, "imagenet-1k-train-*.arrow")))
-    val_files = sorted(glob.glob(os.path.join(base_dir, "imagenet-1k-validation-*.arrow")))
-    train_dataset = concatenate_datasets([Dataset.from_file(f) for f in train_files])
-    val_dataset = concatenate_datasets([Dataset.from_file(f) for f in val_files])
+    # base_dir = "/data/CPE_487-587/imagenet-1k/ILSVRC___imagenet-1k/default/0.0.0/49e2ee26f3810fb5a7536bbf732a7b07389a47b5"
+
+    # train_files = sorted(glob.glob(os.path.join(base_dir, "imagenet-1k-train-*.arrow")))
+    # val_files = sorted(glob.glob(os.path.join(base_dir, "imagenet-1k-validation-*.arrow")))
+    # train_dataset = concatenate_datasets([Dataset.from_file(f) for f in train_files])
+    # val_dataset = concatenate_datasets([Dataset.from_file(f) for f in val_files])
     
+    train_dataset = dataset['train']
+    val_dataset = dataset['validation']
+
     # this is for the hw03 q6
     print("Original dataset size:")
     print(f"Training samples: {len(train_dataset)}")
     print(f"Validation samples: {len(val_dataset)}")
 
-    # train_dataset = dataset['train']
-    # val_dataset = dataset['validation']
     num_classes = len(train_dataset.features['label'].names)
     print(f"Number of classes: {num_classes}")
 
@@ -176,8 +185,8 @@ def main():
 
     # Pick strategy: "utilization" or "memory"
     device_id = get_best_gpu(strategy="utilization")
-    device = torch.device(f"cuda:{device_id}")
-    print(f"Selected GPU: {device_id}")
+    device = torch.device(f"cuda:7" if torch.cuda.is_available() else "cpu")
+    # print(f"Selected GPU: {device_id}")
 
     os.makedirs(args.outdir, exist_ok=True)
     print(f"Using device: {device}")
