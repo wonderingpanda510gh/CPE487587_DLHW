@@ -9,6 +9,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from datasets import Dataset, concatenate_datasets
 import glob
+import subprocess
 
 # first we need to load the dataset, we will use the imagenet dataset from huggingface datasets library
 def load_imagenet_dataset():
