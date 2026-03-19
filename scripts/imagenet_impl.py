@@ -153,7 +153,7 @@ def get_best_gpu(strategy="utilization"):
         for i in range(torch.cuda.device_count()):
             props = torch.cuda.mem_get_info(i) # (free, total)
             free_mem.append(props[0])
-    return free_mem.index(max(free_mem))
+        return free_mem.index(max(free_mem))
 
     elif strategy == "utilization":
         result = subprocess.run(
@@ -161,7 +161,7 @@ def get_best_gpu(strategy="utilization"):
         capture_output=True, text=True
         )
         utilizations = [int(x.strip()) for x in result.stdout.strip().split("\n")]
-    return utilizations.index(min(utilizations))
+        return utilizations.index(min(utilizations))
 
 
 
