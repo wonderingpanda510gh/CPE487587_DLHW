@@ -44,8 +44,8 @@ def load_imagenet_dataset():
     num_classes = len(train_dataset.features['label'].names)
     print(f"Number of classes: {num_classes}")
 
-    train_size = int(len(train_dataset) * 0.10) # 10 percent selection
-    val_size = int(len(val_dataset) * 0.05) # 5 percent selection
+    train_size = int(len(train_dataset) * 0.005) # 10 percent selection
+    val_size = int(len(val_dataset) * 0.002) # 5 percent selection
     train_dataset = train_dataset.select(range(train_size))
     val_dataset = val_dataset.select(range(val_size))
 
