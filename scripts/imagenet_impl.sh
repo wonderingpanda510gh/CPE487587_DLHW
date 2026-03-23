@@ -13,9 +13,12 @@ OUTDIR="${OUTDIR:-results}"
 ONNX_NAME="${ONNX_NAME:-imagenet_model.onnx}"
 
 mkdir -p "${OUTDIR}" # output directory
+mkdir -p logs
 
-echo "Running imagenet_impl.py"
-python scripts/imagenet_impl.py \
+LOG_FILE="logs/train_imagenet.log"
+
+echo "Running imagenet_impl.py" | tee -a "$LOG_FILE"
+python -u scripts/imagenet_impl.py \
     --eta "${ETA}" \
     --epoch "${EPOCH}" \
     --batch_size "${BATCH_SIZE}" \
@@ -24,6 +27,7 @@ python scripts/imagenet_impl.py \
     --device "${DEVICE}" \
     --keyword "${KEYWORD}" \
     --outdir "${OUTDIR}" \
-    --onnx_name "${ONNX_NAME}"
+    --onnx_name "${ONNX_NAME}" \
+    2>&1 | tee -a "$LOG_FILE"
 
-echo "Finished everything"
+echo "Finished everything" | tee -a "$LOG_FILE"
