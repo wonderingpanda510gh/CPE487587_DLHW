@@ -12,7 +12,7 @@ target/
 .venv
 
 data/
-results/
+
 
 
 *.so

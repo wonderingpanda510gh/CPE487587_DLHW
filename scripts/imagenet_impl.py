@@ -49,6 +49,10 @@ def load_imagenet_dataset():
     train_dataset = train_dataset.select(range(train_size))
     val_dataset = val_dataset.select(range(val_size))
 
+    print("Selected dataset size:")
+    print(f"Training samples: {len(train_dataset)}")
+    print(f"Validation samples: {len(val_dataset)}")
+
     first_example = train_dataset[0]
     image = first_example['image']
     label_id = first_example['label']
