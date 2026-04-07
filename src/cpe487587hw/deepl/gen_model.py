@@ -181,7 +181,7 @@ def metrics(img_tensor):
 
 # here is the trainer class, which contains three models
 class GenModelTrainer:
-    def __init__(self, model_type, device='cuda', learning_rate):
+    def __init__(self, model_type, learning_rate, device='cuda'):
         self.model_type = model_type
         self.device = device
         

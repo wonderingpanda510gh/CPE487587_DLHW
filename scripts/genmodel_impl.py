@@ -127,7 +127,7 @@ def main():
     print("********HW04: Generative Modeling********")
     print("Begin our training!!!!!!!!!!!!!!")
     print("cuda available:", torch.cuda.is_available())
-    trainer = GenModelTrainer(model_type=args.model_type, device=args.device, learning_rate=args.learning_rate)
+    trainer = GenModelTrainer(model_type=args.model_type, learning_rate=args.learning_rate, device=args.device)
     
     print(f"Begin training {args.model_type}, device: {args.device}")
     for epoch in range(args.epochs):
