@@ -71,7 +71,7 @@ def plot_metrics(df, model_name, save_dir):
     metrics_names = means.index.tolist()
     values = means.values.tolist()
 
-    plt.figure(figsize=(10, 6))
+    plt.figure()
     # we have five metrics, so we can use different colors for each bar, and we can also add the value on top of each bar
     bars = plt.bar(metrics_names, values, color=['#1072BD', '#77AE43', '#EDB021', '#D7592C', '#7F31BD'])
     
