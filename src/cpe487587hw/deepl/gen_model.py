@@ -47,7 +47,7 @@ class VAE(nn.Module):
 
     def forward(self, x):
         x = self.encoder(x)
-        mu, log_var = self.fc_mu(x), torch.log(self.fc_var(x)) # here is the log of the variance
+        mu, log_var = self.fc_mu(x), self.fc_var(x) # here is the log of the variance
         z = self.reparameterize(mu, log_var)
         z = self.decoder_input(z).view(-1, 128, 8, 8)
         return self.decoder(z), mu, log_var
