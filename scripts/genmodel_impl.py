@@ -30,7 +30,7 @@ class CelebAZipDataset(Dataset):
     def __getitem__(self, idx):
         with zipfile.ZipFile(self.zip_path, 'r') as zf:
             with zf.open(self.image_names[idx]) as f:
-                img = Image.open(io.BytesIO(f.read())).convert('RGB') [cite: 193]
+                img = Image.open(io.BytesIO(f.read())).convert('RGB')
         
         if self.transform:
             img = self.transform(img)
@@ -43,7 +43,7 @@ def save_onnx_model(trainer, model_type, path, device):
     elif model_type == "VAE":
         model = trainer.model.decoder
         dummy_input = torch.randn(1, 128, device=device)
-    else: # Diffusion 示例
+    else: # Diffusion
         model = trainer.model
         dummy_input = (torch.randn(1, 3, 64, 64, device=device), torch.tensor([0], device=device))
     
@@ -108,7 +108,7 @@ def main():
         transforms.Normalize([0.5]*3, [0.5]*3) # normalize to [-1, 1] for GAN and Diffusion
     ])
 
-    full_dataset = CelebAZipDataset(zip_path=args.zip_path, transform=transform) [cite: 222]
+    full_dataset = CelebAZipDataset(zip_path=args.zip_path, transform=transform)
     
     # split the dataset into training and validation sets, according to the hw04, we need to manually pass the training ratio, so I use the arg.train_ratio
     train_size = int(args.train_ratio * len(full_dataset))
