@@ -98,7 +98,7 @@ def main():
     parser.add_argument('--train_ratio', type=float, default=0.8, help='training set ratio')
     parser.add_argument('--save_dir', type=str, default='./results_genmodel', help='directory to save results')
     parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu')
-    
+    parser.add_argument('--learning_rate', type=float, default=0.01, help='learning rate')
     args = parser.parse_args()
     os.makedirs(args.save_dir, exist_ok=True)
     transform = transforms.Compose([
@@ -127,7 +127,7 @@ def main():
     print("********HW04: Generative Modeling********")
     print("Begin our training!!!!!!!!!!!!!!")
     print("cuda available:", torch.cuda.is_available())
-    trainer = GenModelTrainer(model_type=args.model_type, device=args.device)
+    trainer = GenModelTrainer(model_type=args.model_type, device=args.device, learning_rate=args.learning_rate)
     
     print(f"Begin training {args.model_type}, device: {args.device}")
     for epoch in range(args.epochs):

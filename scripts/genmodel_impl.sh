@@ -8,6 +8,7 @@ ONNX_INTERVAL="${ONNX_INTERVAL:-5}"
 TRAIN_RATIO="${TRAIN_RATIO:-0.8}"
 SAVE_DIR="${SAVE_DIR:-./results_genmodel}"
 DEVICE="${DEVICE:-cuda}"
+LEARNING_RATE="${LEARNING_RATE:-0.01}"
 MODEL=("VAE" "GAN" "Diffusion")
 
 mkdir -p "${SAVE_DIR}" # output directory
@@ -23,6 +24,7 @@ for MODEL_TYPE in "${MODEL[@]}"; do
         --train_ratio "$TRAIN_RATIO" \
         --save_dir "$SAVE_DIR" \
         --device "$DEVICE" \
-        --model_type "$MODEL_TYPE"
+        --model_type "$MODEL_TYPE" \
+        --learning_rate "$LEARNING_RATE"
 done
 echo "Finishing genmodel_impl.py"
