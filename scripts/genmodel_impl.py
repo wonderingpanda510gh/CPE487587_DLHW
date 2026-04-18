@@ -36,18 +36,69 @@ class CelebAZipDataset(Dataset):
             img = self.transform(img)
         return img
 
-def save_onnx_model(trainer, model_type, path, device):
-    if model_type == "GAN":
-        model = trainer.netG
-        dummy_input = torch.randn(1, 100, 1, 1, device=device)
-    elif model_type == "VAE":
-        model = trainer.model.decoder
-        dummy_input = torch.randn(1, 128, device=device)
-    else: # Diffusion
-        model = trainer.model
-        dummy_input = (torch.randn(1, 3, 64, 64, device=device), torch.tensor([0], device=device))
+# def save_onnx_model(trainer, model_type, path, device):
+#     if model_type == "GAN":
+#         model = trainer.netG
+#         dummy_input = torch.randn(1, 100, 1, 1, device=device)
+#     elif model_type == "VAE":
+#         model = trainer.model.decoder
+#         dummy_input = torch.randn(1, 128, device=device)
+#     else: # Diffusion
+#         model = trainer.model
+#         dummy_input = (torch.randn(1, 3, 64, 64, device=device), torch.tensor([0], device=device))
     
-    torch.onnx.export(model, dummy_input, path, opset_version=11)
+#     torch.onnx.export(model, dummy_input, path, opset_version=11)
+
+def save_onnx_model(trainer, model_type, path, device):
+
+    if model_type == "GAN":
+        model = trainer.Generator
+        model.eval() 
+        dummy_input = torch.randn(1, 100, 1, 1, device=device)
+        input_names = ['noise_input']
+        
+    elif model_type == "VAE":
+        # here we have encoder and decoder two parts, and reparameterization
+        # here we export the decoder part
+        class VAEDecoderInference(nn.Module):
+            def __init__(self, vae_model):
+                super().__init__()
+                self.decoder_input = vae_model.decoder_input
+                self.decoder = vae_model.decoder
+            def forward(self, z):
+                x = self.decoder_input(z).view(-1, 128, 8, 8)
+                return self.decoder(x)
+        
+        model = VAEDecoderInference(trainer.model).to(device)
+        model.eval()
+        # the input of VAE is [batch, latent_dim]
+        dummy_input = torch.randn(1, 128, device=device)
+        input_names = ['latent_vector']
+        
+    elif model_type == "Diffusion":
+        model = trainer.model # DiffusionNet
+        model.eval()
+        # Diffusion need two inputs, image and time
+        dummy_img = torch.randn(1, 3, 64, 64, device=device)
+        dummy_t = torch.zeros(1, device=device)
+        dummy_input = (dummy_img, dummy_t)
+        input_names = ['image_input', 'time_step']
+
+    try:
+        torch.onnx.export(
+            model, 
+            dummy_input, 
+            path, 
+            export_params=True,        # the weight
+            opset_version=14,          # solve always_classified error
+            do_constant_folding=True,  
+            input_names=input_names,
+            output_names=['generated_output'],
+            dynamic_axes=None 
+        )
+        print(f"{model_type} onnx successfully saved to : {path}")
+    except Exception as e:
+        print(f"{model_type} failed to export onnx: {e}")
 
 # here is the sample images, used for evaluation
 def sample_images(trainer, model_type, device):
@@ -109,11 +160,14 @@ def main():
     ])
 
     full_dataset = CelebAZipDataset(zip_path=args.zip_path, transform=transform)
+    subset_ratio = 0.2  # choose a small dataset
+    subset_size = int(len(full_dataset) * subset_ratio)
+    small_subset, _ = torch.utils.data.random_split(full_dataset, [subset_size, len(full_dataset) - subset_size])
     
     # split the dataset into training and validation sets, according to the hw04, we need to manually pass the training ratio, so I use the arg.train_ratio
-    train_size = int(args.train_ratio * len(full_dataset))
-    val_size = len(full_dataset) - train_size
-    train_dataset, _ = torch.utils.data.random_split(full_dataset, [train_size, val_size])
+    train_size = int(args.train_ratio * len(small_subset))
+    val_size = len(small_subset) - train_size
+    train_dataset, _ = torch.utils.data.random_split(small_subset, [train_size, val_size])
 
     dataloader = DataLoader(
         train_dataset, 
