@@ -101,19 +101,47 @@ def save_onnx_model(trainer, model_type, path, device):
         print(f"{model_type} failed to export onnx: {e}")
 
 # here is the sample images, used for evaluation
+# def sample_images(trainer, model_type, device):
+#     trainer.set_eval()
+#     with torch.no_grad():
+#         if model_type == "GAN":
+#             noise = torch.randn(25, 100, 1, 1, device=device)
+#             return trainer.netG(noise)
+#         elif model_type == "VAE":
+#             z = torch.randn(25, 128, device=device)
+#             return trainer.model.decoder(trainer.model.decoder_input(z).view(-1, 128, 8, 8))
+#         elif model_type == "Diffusion":
+#             x = torch.randn(25, 3, 64, 64, device=device)
+#             for t in reversed(range(1000)):
+#                 x = x - 0.01 * trainer.model(x, torch.full((25,), t, device=device))
+#             return torch.tanh(x)
 def sample_images(trainer, model_type, device):
-    trainer.set_eval()
+    if model_type == "GAN":
+        trainer.Generator.eval()
+    else:
+        trainer.model.eval()
+        
     with torch.no_grad():
         if model_type == "GAN":
             noise = torch.randn(25, 100, 1, 1, device=device)
-            return trainer.netG(noise)
+            return trainer.Generator(noise)
+            
         elif model_type == "VAE":
             z = torch.randn(25, 128, device=device)
-            return trainer.model.decoder(trainer.model.decoder_input(z).view(-1, 128, 8, 8))
+            z_mapped = trainer.model.decoder_input(z).view(-1, 128, 8, 8)
+            return trainer.model.decoder(z_mapped)
+            
         elif model_type == "Diffusion":
             x = torch.randn(25, 3, 64, 64, device=device)
-            for t in reversed(range(1000)):
-                x = x - 0.01 * trainer.model(x, torch.full((25,), t, device=device))
+            steps = 200 # we can use fewer steps for faster sampling, but it may reduce quality 
+            for i in reversed(range(steps)):
+                t = torch.full((25,), i, device=device, dtype=torch.long)
+                predicted_noise = trainer.model(x, t)
+                
+                # x = (x - coefficient * noise) + random_noise
+                x = x - 0.01 * predicted_noise
+                x = torch.clamp(x, -1, 1)
+                
             return torch.tanh(x)
 
 # plot the bar chart for the metrics
