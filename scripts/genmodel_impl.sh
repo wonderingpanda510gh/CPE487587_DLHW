@@ -9,7 +9,7 @@ TRAIN_RATIO="${TRAIN_RATIO:-0.8}"
 SAVE_DIR="${SAVE_DIR:-./results_genmodel}"
 DEVICE="${DEVICE:-cuda}"
 LEARNING_RATE="${LEARNING_RATE:-0.001}"
-MODEL=("VAE" "GAN" "Diffusion")
+MODEL=("Diffusion")
 
 mkdir -p "${SAVE_DIR}" # output directory
 mkdir -p logs

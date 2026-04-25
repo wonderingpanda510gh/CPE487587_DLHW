@@ -196,7 +196,7 @@ class GenModelTrainer:
             self.optimizerD = torch.optim.Adam(self.Discriminator.parameters(), lr=learning_rate)
             self.cost_function = nn.BCELoss() # for GAN, we use binary cross entropy loss for the discriminator and generator, because the discriminator is a binary classifier, and the generator's loss is also based on the discriminator's output
         elif model_type == "Diffusion":
-            self.model = DiffusionNet().to(device)
+            self.model = Diffusion().to(device)
             self.optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
 
     def train_step(self, real_imgs, epoch, step):
