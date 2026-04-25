@@ -90,7 +90,7 @@ python scipts/acc_impl.py --epoch 50 \ --batch_size 256 \ --optimizer ADAM \ etc
 HW04
 Fist we need to do the synchronization, using uv sync, and then
 ```
-bash scripts/acc_impl.sh # we can directly run this scirpts or you can also modify the parameter in this script
+bash scripts/genmodel_impl.sh # we can directly run this scirpts or you can also modify the parameter in this script
 ```
 ## Author
 Zhehao Yi
