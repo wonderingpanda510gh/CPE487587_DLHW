@@ -76,9 +76,9 @@ def save_onnx_model(trainer, model_type, path, device):
         input_names = ['latent_vector']
         
     elif model_type == "Diffusion":
-        model = trainer.model # DiffusionNet
+        model = trainer.model
         model.eval()
-        # Diffusion need two inputs, image and time
+        # diffusion need two inputs, image and time
         dummy_img = torch.randn(1, 3, 64, 64, device=device)
         dummy_t = torch.zeros(1, device=device)
         dummy_input = (dummy_img, dummy_t)
@@ -89,8 +89,8 @@ def save_onnx_model(trainer, model_type, path, device):
             model, 
             dummy_input, 
             path, 
-            export_params=True,        # the weight
-            opset_version=14,          # solve always_classified error
+            export_params=True,        
+            opset_version=14,          
             do_constant_folding=True,  
             input_names=input_names,
             output_names=['generated_output'],
@@ -101,20 +101,6 @@ def save_onnx_model(trainer, model_type, path, device):
         print(f"{model_type} failed to export onnx: {e}")
 
 # here is the sample images, used for evaluation
-# def sample_images(trainer, model_type, device):
-#     trainer.set_eval()
-#     with torch.no_grad():
-#         if model_type == "GAN":
-#             noise = torch.randn(25, 100, 1, 1, device=device)
-#             return trainer.netG(noise)
-#         elif model_type == "VAE":
-#             z = torch.randn(25, 128, device=device)
-#             return trainer.model.decoder(trainer.model.decoder_input(z).view(-1, 128, 8, 8))
-#         elif model_type == "Diffusion":
-#             x = torch.randn(25, 3, 64, 64, device=device)
-#             for t in reversed(range(1000)):
-#                 x = x - 0.01 * trainer.model(x, torch.full((25,), t, device=device))
-#             return torch.tanh(x)
 def sample_images(trainer, model_type, device):
     if model_type == "GAN":
         trainer.Generator.eval()
